@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -56,19 +57,32 @@ func main() {
 	destinationPath := flag.String("o", "", "Destination path")
 	flag.Parse()
 
+	var passedFromSysArgs bool = false
+	var inputData []byte
+
 	if *sourcePath == "" {
-		colorize(ColorRed, "template file not passed")
-		return
+
+		if len(os.Args) < 2 {
+			colorize(ColorRed, "no input or template file passed")
+			os.Exit(1)
+		}
+		passedFromSysArgs = true
+
 	}
 
-	plan, err := ioutil.ReadFile(*sourcePath)
-	if err != nil {
-		colorize(ColorRed, err.Error())
-		return
+	if passedFromSysArgs {
+		inputData = []byte(os.Args[1])
+	} else {
+		var err error
+		inputData, err = os.ReadFile(*sourcePath)
+		if err != nil {
+			colorize(ColorRed, err.Error())
+			return
+		}
 	}
 
 	var originalData map[string]interface{}
-	if err := json.Unmarshal(plan, &originalData); err != nil {
+	if err := json.Unmarshal(inputData, &originalData); err != nil {
 		colorize(ColorRed, err.Error())
 		return
 	}
